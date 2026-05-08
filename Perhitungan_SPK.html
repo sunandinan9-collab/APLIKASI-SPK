@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perhitungan SPK - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400..800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: rgb(63, 7, 51);
+            --sidebar-bg: rgba(255, 255, 255, 0.03);
+            --card-bg: #0706060d;
+            --card-border: rgba(255, 255, 255, 0.12);
+            --card-inner-glow: rgba(13, 13, 14, 0.03);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-saw: #fb923c; /* Orange 400 */
+            --accent-wp: #f97316;  /* Orange 500 */
+            --accent-smart: #ea580c; /* Orange 600 */
+            --accent-home: #c2410c; /* Orange 700 (Persija Style) */
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* Ambient Lights */
+        .ambient-light {
+            position: fixed;
+            width: 80vw;
+            height: 80vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        .light-1 { top: -20%; right: -10%; background: radial-gradient(circle, var(--accent-wp) 0%, transparent 70%); }
+        .light-2 { bottom: -20%; left: 10%; background: radial-gradient(circle, var(--accent-saw) 0%, transparent 70%); }
+
+        /* Sidebar Glassmorphism */
+        aside {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-right: 1px solid var(--card-border);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #fff, var(--accent-home));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.2rem;
+            border-radius: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .nav-item.active[data-view="home"] { border-left: 4px solid var(--accent-home); }
+        .nav-item.active[data-view="saw"] { border-left: 4px solid var(--accent-saw); }
+        .nav-item.active[data-view="wp"] { border-left: 4px solid var(--accent-wp); }
+        .nav-item.active[data-view="smart"] { border-left: 4px solid var(--accent-smart); }
+        .nav-item.active[data-view="history"] { border-left: 4px solid #fff; }
+        .nav-item.active[data-view="final-ranking"] { border-left: 4px solid #fff; }
+
+        /* Final Ranking Sidebar Widget */
+        .sidebar-ranking {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .sidebar-ranking h4 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+        }
+
+        .quick-rank-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.6rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            margin-bottom: 0.6rem;
+            font-size: 0.85rem;
+            border: 1px solid transparent;
+        }
+
+        .quick-rank-pos {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-family: 'Syne', sans-serif;
+        }
+
+        /* Main Content Layout */
+        main {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 3rem;
+            min-height: 100vh;
+        }
+
+        .content-view {
+            display: none;
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .content-view.active {
+            display: block;
+        }
+
+        /* Dashboard/Home Styling */
+        .home-hero {
+            text-align: left;
+            margin-bottom: 4rem;
+        }
+
+        .home-hero h1 {
+            font-size: 3.5rem;
+            font-family: 'Syne', sans-serif;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.4));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .method-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .method-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Reusing Existing Component Styles */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 32px;
+            padding: 2.5rem;
+            backdrop-filter: blur(25px) saturate(200%);
+            margin-bottom: 2.5rem;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(255, 255, 255, 0.04); padding: 1.2rem 1.5rem; font-family: 'Syne', sans-serif; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--card-border); }
+        td { padding: 1rem 1.5rem; border-top: 1px solid var(--card-border); font-size: 0.95rem; }
+        
+        input[type="text"], input[type="number"], select {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 0.7rem 1rem;
+            border-radius: 12px;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .btn { padding: 0.9rem 1.8rem; border-radius: 16px; border: none; cursor: pointer; font-weight: 700; transition: var(--transition); font-family: 'Syne', sans-serif; font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem; }
+        .btn-primary { background: #fff; color: #000; }
+        .btn-outline { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); color: #fff; }
+
+        .results-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-top: 3rem; }
+        .result-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 28px; padding: 2rem; position: relative; backdrop-filter: blur(20px); transition: var(--transition); }
+        .rank-badge { position: absolute; top: 1.5rem; right: 1.5rem; width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-family: 'Syne', sans-serif; }
+        .rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile */
+        @media (max-width: 1024px) {
+            aside { transform: translateX(-100%); transition: transform 0.3s ease; }
+            aside.open { transform: translateX(0); }
+            main { margin-left: 0; width: 100%; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+
+    <aside id="sidebar">
+        <div class="sidebar-logo">
+            <span>SPK KANDIDAT KENAIKAN JABATAN KARYAWAN</span>
+        </div>
+        <nav class="nav-links">
+            <div class="nav-item active" data-view="home">Dashboard</div>
+            <div class="nav-item" data-view="saw">Metode SAW</div>
+            <div class="nav-item" data-view="wp">Metode WP</div>
+            <div class="nav-item" data-view="smart">Metode SMART</div>
+            <div class="nav-item" data-view="history">Riwayat Perhitungan</div>
+            <div class="nav-item" data-view="final-ranking" style="margin-top: 1rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,145,0,0.05);">Final Ranking</div>
+        </nav>
+
+        <div class="sidebar-ranking" id="sidebar-ranking-container" style="display: none;">
+            <h4>Peringkat Terakhir</h4>
+            <div id="sidebar-quick-list">
+                <!-- JS will inject ranking summary here -->
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <!-- Home / Dashboard View -->
+        <section id="view-home" class="content-view active">
+            <div class="home-hero">
+                <h1>Selamat Datang di Portal SPK</h1>
+                <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 700px;">
+                    Platform analisis Sistem Pendukung Keputusan modern dengan metode perhitungan transparan dan akurat. 
+                    Pilih salah satu metode di bawah ini untuk memulai perhitungan.
+                </p>
+            </div>
+
+            <div class="method-grid">
+                <div class="method-card" onclick="switchView('saw')">
+                    <div style="width: 40px; height: 40px; background: var(--accent-saw); border-radius: 10px; margin-bottom: 1.5rem;"></div>
+                    <h3 class="heading-font" style="margin-bottom: 0.8rem;">Metode SAW</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">Simple Additive Weighting. Mencari penjumlahan terbobot dari rating kinerja pada setiap alternatif di semua kriteria.</p>
+                </div>
+                <div class="method-card" onclick="switchView('wp')">
+                    <div style="width: 40px; height: 40px; background: var(--accent-wp); border-radius: 10px; margin-bottom: 1.5rem;"></div>
+                    <h3 class="heading-font" style="margin-bottom: 0.8rem;">Metode WP</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">Weighted Product. Menggunakan perkalian untuk menghubungkan rating atribut, di mana rating harus dipangkatkan dengan bobot.</p>
+                </div>
+                <div class="method-card" onclick="switchView('smart')">
+                    <div style="width: 40px; height: 40px; background: var(--accent-smart); border-radius: 10px; margin-bottom: 1.5rem;"></div>
+                    <h3 class="heading-font" style="margin-bottom: 0.8rem;">Metode SMART</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">Simple Multi Attribute Rating Technique. Metode pengambilan keputusan yang fleksibel dengan pembobotan kriteria yang sederhana.</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 3rem;">
+                <h3 class="heading-font" style="margin-bottom: 1rem;">Cara Penggunaan</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+                    <div>
+                        <strong style="color: #fff; display: block; margin-bottom: 0.5rem;">1. Pilih Metode</strong>
+                        Gunakan menu sidebar untuk memilih metode perhitungan yang sesuai dengan kebutuhan Anda.
+                    </div>
+                    <div>
+                        <strong style="color: #fff; display: block; margin-bottom: 0.5rem;">2. Input Data</strong>
+                        Tentukan jumlah alternatif dan kriteria, lalu masukkan nilai bobot serta jenis atributnya.
+                    </div>
+                    <div>
+                        <strong style="color: #fff; display: block; margin-bottom: 0.5rem;">3. Analisis Hasil</strong>
+                        Tekan tombol hitung untuk melihat langkah-langkah normalisasi hingga hasil perankingan akhir.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calculation View -->
+        <section id="view-calc" class="content-view">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="method-title">Simple Additive Weighting (SAW)</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" onclick="loadSampleData()">Contoh Data</button>
+                        <button class="btn btn-outline" onclick="resetApp()">Reset</button>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <span>Alternatif:</span>
+                        <div class="counter">
+                            <button onclick="updateCount('alt', -1)">-</button>
+                            <span id="alt-count">3</span>
+                            <button onclick="updateCount('alt', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <span>Kriteria:</span>
+                        <div class="counter">
+                            <button onclick="updateCount('crit', -1)">-</button>
+                            <span id="crit-count">3</span>
+                            <button onclick="updateCount('crit', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="smart-options" style="display: none;" class="smart-threshold">
+                    <span>Batas Kelayakan (Opsional):</span>
+                    <input type="number" id="threshold" placeholder="Contoh: 0.7" step="0.1" style="width: 120px;">
+                </div>
+
+                <h3 style="margin-bottom: 1rem;">1. Input Kriteria & Bobot</h3>
+                <div class="table-container">
+                    <table id="criteria-table">
+                        <thead>
+                            <tr>
+                                <th>Nama Kriteria</th>
+                                <th>Bobot</th>
+                                <th>Jenis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="criteria-body"></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin-bottom: 1rem;">2. Matriks Keputusan</h3>
+                <div class="table-container">
+                    <table id="decision-table">
+                        <thead id="decision-head"></thead>
+                        <tbody id="decision-body"></tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="calc-btn" class="btn btn-primary" onclick="calculate()" style="padding: 1rem 3rem; font-size: 1.1rem; margin: 0 auto;">Hitung Sekarang</button>
+                </div>
+            </div>
+
+            <div id="results-container" style="display: none;">
+                <div id="calculation-steps"></div>
+                <h2 style="margin: 3rem 0 1.5rem; text-align: center;" class="heading-font">Hasil Perankingan</h2>
+                <div class="results-section" id="ranking-results"></div>
+            </div>
+        </section>
+
+        <!-- History View -->
+        <section id="view-history" class="content-view">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="heading-font">Riwayat Perhitungan</h2>
+                    <button class="btn btn-outline" onclick="clearHistory()" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">Hapus Semua</button>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Daftar perhitungan yang telah Anda lakukan sebelumnya.</p>
+                
+                <div id="history-list" class="results-section" style="grid-template-columns: 1fr;">
+                    <!-- History items will be injected here -->
+                </div>
+
+                <div id="history-empty-state" style="text-align: center; padding: 4rem 2rem; color: var(--text-muted); display: none;">
+                    <p>Belum ada riwayat perhitungan.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Ranking View -->
+        <section id="view-final-ranking" class="content-view">
+            <div class="card">
+                <h2 class="heading-font" style="margin-bottom: 2rem; text-align: center;">Ringkasan Final Ranking</h2>
+                <p style="color: var(--text-muted); text-align: center; margin-bottom: 3rem;">
+                    Data di bawah ini merupakan hasil perhitungan terakhir yang dilakukan. 
+                    Gunakan tabel ini untuk melihat perbandingan skor secara mendetail.
+                </p>
+                
+                <div class="table-container">
+                    <table id="final-summary-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Rank</th>
+                                <th>Nama Alternatif</th>
+                                <th>Skor Akhir</th>
+                                <th>Persentase</th>
+                            </tr>
+                        </thead>
+                        <tbody id="final-summary-body">
+                            <!-- JS will inject here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="final-empty-state" style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+                    <p>Belum ada data perhitungan. Silakan lakukan perhitungan di salah satu metode terlebih dahulu.</p>
+                    <button class="btn btn-primary" onclick="switchView('saw')" style="margin: 1.5rem auto;">Buka Metode SAW</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentMethod = 'saw';
+        let numAlternatives = 3;
+        let numCriteria = 3;
+        let lastResults = []; // Store last calculation results
+
+        const methods = {
+            saw: { title: "Simple Additive Weighting (SAW)", color: "var(--accent-saw)" },
+            wp: { title: "Weighted Product (WP)", color: "var(--accent-wp)" },
+            smart: { title: "Simple Multi Attribute Rating Technique (SMART)", color: "var(--accent-smart)" },
+            history: { title: "Riwayat Perhitungan", color: "#fff" },
+            'final-ranking': { title: "Final Ranking Summary", color: "#fff" }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTables();
+            setupNavigation();
+        });
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const view = item.dataset.view;
+                    switchView(view);
+                });
+            });
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const navItem = document.querySelector(`.nav-item[data-view="${view}"]`);
+            if(navItem) navItem.classList.add('active');
+
+            document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
+
+            if(view === 'home') {
+                document.getElementById('view-home').classList.add('active');
+            } else if(view === 'history') {
+                document.getElementById('view-history').classList.add('active');
+                renderHistoryPage();
+            } else if(view === 'final-ranking') {
+                document.getElementById('view-final-ranking').classList.add('active');
+                renderFinalRankingPage();
+            } else {
+                currentMethod = view;
+                document.getElementById('view-calc').classList.add('active');
+                document.getElementById('method-title').innerText = methods[currentMethod].title;
+                document.getElementById('calc-btn').style.background = methods[currentMethod].color;
+                
+                if(currentMethod === 'smart') {
+                    document.getElementById('smart-options').style.display = 'flex';
+                } else {
+                    document.getElementById('smart-options').style.display = 'none';
+                }
+                resetResults();
+                initTables();
+            }
+        }
+
+        function updateCount(type, delta) {
+            if(type === 'alt') {
+                numAlternatives = Math.max(1, numAlternatives + delta);
+                document.getElementById('alt-count').innerText = numAlternatives;
+            } else {
+                numCriteria = Math.max(1, numCriteria + delta);
+                document.getElementById('crit-count').innerText = numCriteria;
+            }
+            initTables();
+            resetResults();
+        }
+
+        function initTables() {
+            // Criteria Table
+            const critBody = document.getElementById('criteria-body');
+            critBody.innerHTML = '';
+            for(let i = 0; i < numCriteria; i++) {
+                critBody.innerHTML += `
+                    <tr>
+                        <td><input type="text" placeholder="Kriteria ${i+1}" value="C${i+1}" id="crit-name-${i}"></td>
+                        <td><input type="number" step="0.01" value="1" id="crit-weight-${i}"></td>
+                        <td>
+                            <select id="crit-type-${i}">
+                                <option value="benefit">Benefit</option>
+                                <option value="cost">Cost</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // Decision Table
+            const decHead = document.getElementById('decision-head');
+            const decBody = document.getElementById('decision-body');
+            
+            let headHtml = '<tr><th>Alternatif</th>';
+            for(let i = 0; i < numCriteria; i++) {
+                headHtml += `<th id="th-crit-${i}">C${i+1}</th>`;
+            }
+            headHtml += '</tr>';
+            decHead.innerHTML = headHtml;
+
+            decBody.innerHTML = '';
+            for(let i = 0; i < numAlternatives; i++) {
+                let rowHtml = `<tr><td><input type="text" value="A${i+1}" id="alt-name-${i}"></td>`;
+                for(let j = 0; j < numCriteria; j++) {
+                    rowHtml += `<td><input type="number" step="0.01" value="0" id="val-${i}-${j}"></td>`;
+                }
+                rowHtml += '</tr>';
+                decBody.innerHTML += rowHtml;
+            }
+
+            // Sync criteria names to decision table headers
+            for(let i = 0; i < numCriteria; i++) {
+                const input = document.getElementById(`crit-name-${i}`);
+                input.addEventListener('input', (e) => {
+                    document.getElementById(`th-crit-${i}`).innerText = e.target.value;
+                });
+            }
+        }
+
+        function resetResults() {
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('calculation-steps').innerHTML = '';
+            document.getElementById('ranking-results').innerHTML = '';
+        }
+
+        function resetApp() {
+            numAlternatives = 3;
+            numCriteria = 3;
+            document.getElementById('alt-count').innerText = 3;
+            document.getElementById('crit-count').innerText = 3;
+            document.getElementById('threshold').value = '';
+            initTables();
+            resetResults();
+        }
+
+        function loadSampleData() {
+            numAlternatives = 3;
+            numCriteria = 3;
+            document.getElementById('alt-count').innerText = 3;
+            document.getElementById('crit-count').innerText = 3;
+            initTables();
+
+            const samples = {
+                critNames: ["Harga", "Kualitas", "Layanan"],
+                weights: [0.5, 0.3, 0.2],
+                types: ["cost", "benefit", "benefit"],
+                altNames: ["Toko A", "Toko B", "Toko C"],
+                values: [
+                    [500, 80, 70],
+                    [600, 90, 85],
+                    [450, 75, 60]
+                ]
+            };
+
+            for(let i = 0; i < 3; i++) {
+                document.getElementById(`crit-name-${i}`).value = samples.critNames[i];
+                document.getElementById(`th-crit-${i}`).innerText = samples.critNames[i];
+                document.getElementById(`crit-weight-${i}`).value = samples.weights[i];
+                document.getElementById(`crit-type-${i}`).value = samples.types[i];
+                document.getElementById(`alt-name-${i}`).value = samples.altNames[i];
+                for(let j = 0; j < 3; j++) {
+                    document.getElementById(`val-${i}-${j}`).value = samples.values[i][j];
+                }
+            }
+            resetResults();
+        }
+
+        // --- Calculation Logic ---
+
+        function calculate() {
+            const data = collectData();
+            let results;
+
+            if (currentMethod === 'saw') results = calculateSAW(data);
+            else if (currentMethod === 'wp') results = calculateWP(data);
+            else if (currentMethod === 'smart') results = calculateSMART(data);
+
+            displayResults(results);
+        }
+
+        function collectData() {
+            const criteria = [];
+            for(let i = 0; i < numCriteria; i++) {
+                criteria.push({
+                    name: document.getElementById(`crit-name-${i}`).value,
+                    weight: parseFloat(document.getElementById(`crit-weight-${i}`).value),
+                    type: document.getElementById(`crit-type-${i}`).value
+                });
+            }
+
+            const alternatives = [];
+            for(let i = 0; i < numAlternatives; i++) {
+                const values = [];
+                for(let j = 0; j < numCriteria; j++) {
+                    values.push(parseFloat(document.getElementById(`val-${i}-${j}`).value));
+                }
+                alternatives.push({
+                    name: document.getElementById(`alt-name-${i}`).value,
+                    values: values
+                });
+            }
+
+            return { criteria, alternatives };
+        }
+
+        function calculateSAW(data) {
+            const { criteria, alternatives } = data;
+            const steps = [];
+
+            // 1. Normalization
+            const normalized = alternatives.map(alt => ({ name: alt.name, values: [] }));
+            for(let j = 0; j < numCriteria; j++) {
+                const colValues = alternatives.map(alt => alt.values[j]);
+                const max = Math.max(...colValues);
+                const min = Math.min(...colValues);
+
+                alternatives.forEach((alt, i) => {
+                    let val;
+                    if(criteria[j].type === 'benefit') {
+                        val = max === 0 ? 0 : alt.values[j] / max;
+                    } else {
+                        val = alt.values[j] === 0 ? 0 : min / alt.values[j];
+                    }
+                    normalized[i].values.push(val);
+                });
+            }
+
+            steps.push({ title: "Matriks Normalisasi (R)", data: normalized, type: "table" });
+
+            // 2. Preference Value
+            const finalScores = normalized.map(alt => {
+                let score = 0;
+                alt.values.forEach((v, idx) => {
+                    score += v * criteria[idx].weight;
+                });
+                return { name: alt.name, score: score };
+            });
+
+            return { steps, finalScores };
+        }
+
+        function calculateWP(data) {
+            const { criteria, alternatives } = data;
+            const steps = [];
+
+            // 1. Weight Normalization
+            const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+            const normWeights = criteria.map(c => {
+                const w = c.weight / totalWeight;
+                return c.type === 'benefit' ? w : -w;
+            });
+
+            steps.push({ 
+                title: "Normalisasi Bobot (W)", 
+                data: criteria.map((c, i) => ({ kriteria: c.name, bobot: c.weight, normalisasi: normWeights[i].toFixed(4) })),
+                type: "simple-table"
+            });
+
+            // 2. Vector S
+            const vectorS = alternatives.map(alt => {
+                let s = 1;
+                alt.values.forEach((v, idx) => {
+                    s *= Math.pow(v, normWeights[idx]);
+                });
+                return { name: alt.name, value: s };
+            });
+
+            steps.push({ title: "Vektor S", data: vectorS, type: "simple-table" });
+
+            // 3. Vector V
+            const totalS = vectorS.reduce((sum, item) => sum + item.value, 0);
+            const finalScores = vectorS.map(item => ({
+                name: item.name,
+                score: item.value / totalS
+            }));
+
+            return { steps, finalScores };
+        }
+
+        function calculateSMART(data) {
+            const { criteria, alternatives } = data;
+            const steps = [];
+
+            // 1. Weight Normalization
+            const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+            const normWeights = criteria.map(c => c.weight / totalWeight);
+
+            steps.push({ 
+                title: "Normalisasi Bobot", 
+                data: criteria.map((c, i) => ({ kriteria: c.name, bobot: c.weight, normalisasi: normWeights[i].toFixed(4) })),
+                type: "simple-table"
+            });
+
+            // 2. Utility Value (Normalisasi 0-100 style)
+            const utilities = alternatives.map(alt => ({ name: alt.name, values: [] }));
+            for(let j = 0; j < numCriteria; j++) {
+                const colValues = alternatives.map(alt => alt.values[j]);
+                const max = Math.max(...colValues);
+                const min = Math.min(...colValues);
+                const range = max - min;
+
+                alternatives.forEach((alt, i) => {
+                    let u;
+                    if(range === 0) u = 1;
+                    else {
+                        if(criteria[j].type === 'benefit') {
+                            u = (alt.values[j] - min) / range;
+                        } else {
+                            u = (max - alt.values[j]) / range;
+                        }
+                    }
+                    utilities[i].values.push(u);
+                });
+            }
+
+            steps.push({ title: "Nilai Utility (U)", data: utilities, type: "table" });
+
+            // 3. Final Score
+            const finalScores = utilities.map(alt => {
+                let score = 0;
+                alt.values.forEach((u, idx) => {
+                    score += u * normWeights[idx];
+                });
+                return { name: alt.name, score: score };
+            });
+
+            return { steps, finalScores };
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('results-container');
+            const stepsDiv = document.getElementById('calculation-steps');
+            const rankingDiv = document.getElementById('ranking-results');
+            
+            container.style.display = 'block';
+            stepsDiv.innerHTML = '<h2 style="margin: 3rem 0 1.5rem; text-align: center;" class="heading-font">Langkah Perhitungan</h2>';
+
+            results.steps.forEach(step => {
+                let stepHtml = `<div class="card fade-in"><h3>${step.title}</h3><div class="table-container"><table>`;
+                
+                if(step.type === 'table') {
+                    stepHtml += '<thead><tr><th>Alternatif</th>';
+                    for(let i = 0; i < numCriteria; i++) {
+                        stepHtml += `<th>${document.getElementById(`crit-name-${i}`).value}</th>`;
+                    }
+                    stepHtml += '</tr></thead><tbody>';
+                    step.data.forEach(row => {
+                        stepHtml += `<tr><td>${row.name}</td>`;
+                        row.values.forEach(v => {
+                            stepHtml += `<td>${v.toFixed(4)}</td>`;
+                        });
+                        stepHtml += '</tr>';
+                    });
+                } else {
+                    const keys = Object.keys(step.data[0]);
+                    stepHtml += '<thead><tr>';
+                    keys.forEach(k => stepHtml += `<th>${k}</th>`);
+                    stepHtml += '</tr></thead><tbody>';
+                    step.data.forEach(row => {
+                        stepHtml += '<tr>';
+                        keys.forEach(k => stepHtml += `<td>${row[k]}</td>`);
+                        stepHtml += '</tr>';
+                    });
+                }
+                
+                stepHtml += '</tbody></table></div></div>';
+                stepsDiv.innerHTML += stepHtml;
+            });
+
+            // Ranking
+            const sorted = [...results.finalScores].sort((a, b) => b.score - a.score);
+            const maxScore = sorted[0].score;
+            const threshold = parseFloat(document.getElementById('threshold').value) || 0;
+
+            rankingDiv.innerHTML = '';
+            sorted.forEach((res, index) => {
+                const percentage = maxScore === 0 ? 0 : (res.score / maxScore) * 100;
+                const isEligible = currentMethod === 'smart' && threshold > 0 ? res.score >= threshold : null;
+                
+                rankingDiv.innerHTML += `
+                    <div class="result-card fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="rank-badge rank-${index + 1}">${index + 1}</div>
+                        <h3 style="margin-bottom: 0.5rem;">${res.name}</h3>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: ${methods[currentMethod].color}">${res.score.toFixed(4)}</div>
+                        
+                        ${currentMethod === 'smart' && threshold > 0 ? `
+                            <div style="margin-top: 0.5rem;">
+                                <span class="status-badge ${isEligible ? 'status-eligible' : 'status-not-eligible'}">
+                                    ${isEligible ? 'Layak' : 'Tidak Layak'}
+                                </span>
+                            </div>
+                        ` : ''}
+
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${percentage}%; background: ${methods[currentMethod].color}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Trigger animations
+            setTimeout(() => {
+                document.querySelectorAll('.progress-bar').forEach(bar => {
+                    const w = bar.style.width;
+                    bar.style.width = '0';
+                    setTimeout(() => bar.style.width = w, 50);
+                });
+            }, 100);
+
+            // Update Sidebar Quick Ranking
+            lastResults = sorted; // Save for Final Ranking view
+            saveToHistory(currentMethod, sorted);
+            updateSidebarRanking(sorted);
+
+            // Scroll to results
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderFinalRankingPage() {
+            const table = document.getElementById('final-summary-table');
+            const body = document.getElementById('final-summary-body');
+            const empty = document.getElementById('final-empty-state');
+
+            if(lastResults.length === 0) {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                table.style.display = 'table';
+                empty.style.display = 'none';
+                body.innerHTML = '';
+
+                const maxScore = Math.max(...lastResults.map(r => r.score));
+
+                lastResults.forEach((res, index) => {
+                    const percentage = maxScore === 0 ? 0 : (res.score / maxScore) * 100;
+                    body.innerHTML += `
+                        <tr class="fade-in" style="animation-delay: ${index * 0.05}s">
+                            <td><div class="quick-rank-pos" style="background: ${index === 0 ? 'var(--accent-saw)' : 'rgba(255,255,255,0.1)'}; color: ${index === 0 ? '#000' : '#fff'}">${index + 1}</div></td>
+                            <td style="font-weight: 700;">${res.name}</td>
+                            <td style="color: var(--accent-saw); font-weight: 800; font-family: 'Syne', sans-serif;">${res.score.toFixed(4)}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div class="progress-container" style="flex-grow: 1; margin-top: 0; height: 6px;">
+                                        <div class="progress-bar" style="width: ${percentage}%; background: var(--accent-saw)"></div>
+                                    </div>
+                                    <span style="font-size: 0.8rem; min-width: 40px;">${percentage.toFixed(0)}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function updateSidebarRanking(sortedResults) {
+            const container = document.getElementById('sidebar-ranking-container');
+            const list = document.getElementById('sidebar-quick-list');
+            
+            container.style.display = 'block';
+            list.innerHTML = '';
+
+            // Show top 5 or all if less than 5
+            const topResults = sortedResults.slice(0, 5);
+            
+            topResults.forEach((res, index) => {
+                list.innerHTML += `
+                    <div class="quick-rank-item fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="quick-rank-pos" style="color: ${index === 0 ? 'var(--accent-saw)' : 'inherit'}">
+                            ${index + 1}
+                        </div>
+                        <div style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${res.name}
+                        </div>
+                        <div style="font-weight: 700; color: ${methods[currentMethod].color}">
+                            ${res.score.toFixed(3)}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- History Logic ---
+        function saveToHistory(method, results) {
+            const history = JSON.parse(localStorage.getItem('spk_history') || '[]');
+            const newEntry = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('id-ID'),
+                method: method,
+                methodTitle: methods[method].title,
+                bestAlt: results[0].name,
+                bestScore: results[0].score,
+                results: results
+            };
+            history.unshift(newEntry);
+            localStorage.setItem('spk_history', JSON.stringify(history.slice(0, 10))); // Keep last 10
+        }
+
+        function renderHistoryPage() {
+            const list = document.getElementById('history-list');
+            const empty = document.getElementById('history-empty-state');
+            const history = JSON.parse(localStorage.getItem('spk_history') || '[]');
+
+            if(history.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+            } else {
+                empty.style.display = 'none';
+                list.innerHTML = '';
+                history.forEach((entry, index) => {
+                    list.innerHTML += `
+                        <div class="result-card fade-in" style="animation-delay: ${index * 0.1}s; display: flex; justify-content: space-between; align-items: center; gap: 2rem;">
+                            <div style="flex-grow: 1;">
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">${entry.timestamp} • ${entry.methodTitle}</div>
+                                <h3 style="margin-bottom: 0.3rem;">Terbaik: ${entry.bestAlt}</h3>
+                                <div style="font-weight: 800; color: ${methods[entry.method].color}">Skor: ${entry.bestScore.toFixed(4)}</div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-outline" onclick="loadFromHistory(${entry.id})" style="font-size: 0.7rem; padding: 0.5rem 1rem;">Lihat</button>
+                                <button class="btn btn-outline" onclick="deleteHistoryItem(${entry.id})" style="font-size: 0.7rem; padding: 0.5rem 1rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">Hapus</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function loadFromHistory(id) {
+            const history = JSON.parse(localStorage.getItem('spk_history') || '[]');
+            const entry = history.find(h => h.id === id);
+            if(entry) {
+                lastResults = entry.results;
+                switchView('final-ranking');
+            }
+        }
+
+        function deleteHistoryItem(id) {
+            let history = JSON.parse(localStorage.getItem('spk_history') || '[]');
+            history = history.filter(h => h.id !== id);
+            localStorage.setItem('spk_history', JSON.stringify(history));
+            renderHistoryPage();
+        }
+
+        function clearHistory() {
+            if(confirm('Apakah Anda yakin ingin menghapus semua riwayat?')) {
+                localStorage.removeItem('spk_history');
+                renderHistoryPage();
+            }
+        }
+    </script>
+</body>
+</html>
